@@ -1,13 +1,34 @@
 import React from "react";
 import { useState } from "react";
 import Header from "./Header";
+import { validatePassword } from "../utils/passwordValidate";
+import { useRef } from "react";
 
 const Login = () => {
   const [toggleSignInButton, setToggleSignInButton] = useState(true);
+  const [errorMessage, setErrorMessage] = useState("");
+
+  //reading email and password value with the use of useRef//
+  const emailRef = useRef();
+  const passwordRef = useRef();
 
   function handleSignUpButtonPress(event) {
+    //function for toggling sigin/signup button
     event.preventDefault();
     setToggleSignInButton(!toggleSignInButton);
+  }
+
+  function handleButtonPress(e) {
+    //function for handling validation and login when signin button press
+    e.preventDefault();
+    const email = emailRef.current.value;
+    const password = passwordRef.current.value;
+    const valiationOutcome = validatePassword(email, password);
+    if (valiationOutcome !== true) {
+      setErrorMessage(valiationOutcome);
+    } else {
+      setErrorMessage("");
+    }
   }
   return (
     <div>
@@ -27,6 +48,7 @@ const Login = () => {
           type="text"
           placeholder="Email Address"
           className="p-2 my-4 w-full bg-gray-600"
+          ref={emailRef}
         />
         {!toggleSignInButton && (
           <input
@@ -39,8 +61,13 @@ const Login = () => {
           type="password"
           placeholder="Password"
           className="p-2 my-4 w-full bg-gray-600"
+          ref={passwordRef}
         />
-        <button className="p-4 my-6 mx-0 bg-red-700 w-full rounded-lg">
+        <p className="text-red-500">{errorMessage}</p>
+        <button
+          className="p-4 my-6 mx-0 bg-red-700 w-full rounded-lg"
+          onClick={handleButtonPress}
+        >
           {toggleSignInButton ? "Sign In" : "Sign Up"}
         </button>
         <p>
