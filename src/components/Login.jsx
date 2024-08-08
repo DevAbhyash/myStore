@@ -1,16 +1,21 @@
 import React from "react";
+import { createUserWithEmailAndPassword, updateProfile } from "firebase/auth";
+import { signInWithEmailAndPassword } from "firebase/auth";
 import { useState } from "react";
 import Header from "./Header";
 import { validatePassword } from "../utils/passwordValidate";
 import { useRef } from "react";
-
+import { auth } from "../utils/firebase";
+import { useNavigate } from "react-router-dom";
 const Login = () => {
   const [toggleSignInButton, setToggleSignInButton] = useState(true);
   const [errorMessage, setErrorMessage] = useState("");
+  const navigate = useNavigate();
 
   //reading email and password value with the use of useRef//
   const emailRef = useRef();
   const passwordRef = useRef();
+  const displayNameRef = useRef();
 
   function handleSignUpButtonPress(event) {
     //function for toggling sigin/signup button
@@ -21,13 +26,57 @@ const Login = () => {
   function handleButtonPress(e) {
     //function for handling validation and login when signin button press
     e.preventDefault();
-    const email = emailRef.current.value;
-    const password = passwordRef.current.value;
-    const valiationOutcome = validatePassword(email, password);
+
+    const emailValue = emailRef.current.value;
+    const passwordValue = passwordRef.current.value;
+    const valiationOutcome = validatePassword(emailValue, passwordValue);
+
     if (valiationOutcome !== true) {
       setErrorMessage(valiationOutcome);
     } else {
       setErrorMessage("");
+      if (!toggleSignInButton) {
+        // signup logic
+        createUserWithEmailAndPassword(auth, emailValue, passwordValue)
+          .then((userCredential) => {
+            // Signed up
+            const user = userCredential.user;
+            navigate("/browse");
+
+            // ...
+            updateProfile(auth.currentUser, {
+              displayName: displayNameRef.current.value,
+            })
+              .then(() => {
+                // Profile updated!
+                // ...
+              })
+              .catch((error) => {
+                // An error occurred
+                // ...
+              });
+          })
+          .catch((error) => {
+            const errorCode = error.code;
+            const errorMessage = error.message;
+            setErrorMessage(errorCode + errorMessage);
+            // ..
+          });
+      } else {
+        //Sign in logic
+        signInWithEmailAndPassword(auth, emailValue, passwordValue)
+          .then((userCredential) => {
+            // Signed in
+            const user = userCredential.user;
+            navigate("/browse");
+            // ...
+          })
+          .catch((error) => {
+            const errorCode = error.code;
+            const errorMessage = error.message;
+            setErrorMessage(errorCode + errorMessage);
+          });
+      }
     }
   }
   return (
@@ -52,6 +101,7 @@ const Login = () => {
         />
         {!toggleSignInButton && (
           <input
+            ref={displayNameRef}
             type="text"
             placeholder="Full Name"
             className="p-2 my-4 w-full bg-gray-600"
